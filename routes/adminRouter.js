@@ -115,11 +115,81 @@ adminRouter.post("/course", adminMiddleware, async (req, res) => {
 
 })
 
-adminRouter.get("/course/bulk", (req, res) => { })
+adminRouter.get("/course/bulk", adminMiddleware, async (req, res) => {
+    const adminId = req.adminId;
+    try {
+        const courses = await courseModel.find({
+            creatorId: adminId
+        });
+        res.status(200).json({
+            message: "Courses fetched successfully!",
+            courses,
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: "Error fetching courses",
+            error: error.message,
+        });
+    }
+});
 
-adminRouter.put("/course", (req, res) => { })
+adminRouter.put("/course", adminMiddleware, async (req, res) => {
+    const { courseId, ...updateData } = req.body;
 
-adminRouter.delete("/course/:id", (req, res) => { })
+    if (!courseId) {
+        return res.status(400).json({
+            message: "Course ID is required",
+        });
+    }
+
+    try {
+        const updatedCourse = await courseModel.findByIdAndUpdate(
+            courseId,
+            updateData,
+            { new: true } // Return the updated document
+        );
+
+        if (!updatedCourse) {
+            return res.status(404).json({
+                message: "Course not found",
+            });
+        }
+
+        res.status(200).json({
+            message: "Course updated successfully!",
+            course: updatedCourse,
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: "Error updating course",
+            error: error.message,
+        });
+    }
+});
+
+adminRouter.delete("/course/:id", adminMiddleware, async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const deletedCourse = await courseModel.findByIdAndDelete(id);
+
+        if (!deletedCourse) {
+            return res.status(404).json({
+                message: "Course not found",
+            });
+        }
+
+        res.status(200).json({
+            message: "Course deleted successfully!",
+            deletedCourse,
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: "Error deleting course",
+            error: error.message,
+        });
+    }
+});
 
 
 module.exports = {
