@@ -47,6 +47,7 @@ userRouter.post('/signup', async (req, res) => {
         });
     }
 })
+
 userRouter.post('/login', async (req, res) => {
     const email = req.body.email;
     const password = req.body.password;
@@ -71,11 +72,34 @@ userRouter.post('/login', async (req, res) => {
         })
     }
 })
+
 userRouter.get('/purchases', userMiddleware, async (req, res) => {
+    const userId = req.userId;
 
+    try {
+        // Fetch all purchases made by the user
+        const purchases = await purchaseModel.find({ userId }).populate('courseId');
 
-    console.log("userId", req.userId)
-})
+        if (!purchases || purchases.length === 0) {
+            return res.status(404).json({
+                message: "No purchases found for this user",
+            });
+        }
+
+        // Extract course details from the purchases
+        const purchasedCourses = purchases.map(purchase => purchase.courseId);
+
+        res.status(200).json({
+            message: "Purchases fetched successfully!",
+            courses: purchasedCourses,
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: "Error fetching purchases",
+            error: error.message,
+        });
+    }
+});
 
 module.exports = {
     userRouter
