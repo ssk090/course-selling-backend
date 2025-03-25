@@ -3,6 +3,7 @@ const { z } = require('zod');
 const bcrypt = require('bcrypt')
 const { userModel } = require('../db');
 const jwt = require("jsonwebtoken");
+const { userMiddleware } = require('../middleware/user');
 
 const userRouter = Router();
 
@@ -70,7 +71,11 @@ userRouter.post('/login', async (req, res) => {
         })
     }
 })
-userRouter.get('/purchases', (req, res) => { })
+userRouter.get('/purchases', userMiddleware, async (req, res) => {
+
+
+    console.log("userId", req.userId)
+})
 
 module.exports = {
     userRouter

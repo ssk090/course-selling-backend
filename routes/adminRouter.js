@@ -1,8 +1,9 @@
 const { Router } = require('express')
-const { adminModel } = require("../db")
+const { adminModel, courseModel } = require("../db")
 const { z } = require('zod')
 const jwt = require("jsonwebtoken")
 const bcrypt = require('bcrypt')
+const { adminMiddleware } = require("../middleware/admin")
 
 const adminRouter = Router();
 
@@ -72,7 +73,47 @@ adminRouter.post("/login", async (req, res) => {
     }
 })
 
-adminRouter.post("/course", (req, res) => { })
+adminRouter.post("/course", adminMiddleware, async (req, res) => {
+    const adminId = req.adminId;
+    const requiredBody = z.object({
+        title: z.string(),
+        description: z.string(),
+        price: z.number(),
+        imageUrl: z.string(),
+    })
+
+    const parsedData = requiredBody.safeParse(req.body)
+
+    if (!parsedData.success) {
+        res.status(403).json({
+            message: "Incorrect format",
+            error: parsedData.error
+        })
+        return
+    }
+
+    const { title, description, price, imageUrl } = req.body
+
+    try {
+        const course = await courseModel.create({
+            title,
+            description,
+            price,
+            imageUrl, // TODO: Should have actual image url
+            creatorId: adminId
+        })
+        res.status(200).json({
+            message: "Course created successfully!",
+            courseId: course._id.toString()
+        });
+
+    } catch (error) {
+        res.status(403).json({
+            message: "duplicated course"
+        });
+    }
+
+})
 
 adminRouter.get("/course/bulk", (req, res) => { })
 
